@@ -39,10 +39,11 @@ function initMap() {
       };
 
       clearButton.onclick = function(_e) {
-        // L.EditToolbar.Delete(map, drawControl)
-        // while (shapesHistoryArr.length > 0) {
-        //   shapesHistoryArr.pop().setMap(null);
-        // }
+        try {
+          shapesHistoryArr.forEach(_layer => map.removeLayer(_layer));
+        } catch (_error) {
+          console.log("clearButton error: ", _error);
+        }
       };
     } catch (_error) {
       console.log("setButtonsAndMapEventHandlers error: ", _error);
@@ -66,7 +67,6 @@ function DrawPolyShape() {
     try {
       var polygon = new L.Draw.Polygon(this.map, this.drawingManager);
       polygon.enable();
-      this.shapesHistoryArr.push(polygon);
     } catch (_error) {
       console.log("DrawPolyShape.polygon error", _error);
     }
@@ -76,7 +76,6 @@ function DrawPolyShape() {
     try {
       var polyline = new L.Draw.Polyline(this.map, this.drawingManager);
       polyline.enable();
-      this.shapesHistoryArr.push(polyline);
     } catch (_error) {
       console.log("DrawPolyShape.polyline error", _error);
     }
@@ -86,7 +85,6 @@ function DrawPolyShape() {
     try {
       var circle = new L.Draw.Circle(this.map, this.drawingManager);
       circle.enable();
-      this.shapesHistoryArr.push(circle);
     } catch (_error) {
       console.log("DrawPolyShape.circle error", _error);
     }
@@ -96,6 +94,7 @@ function DrawPolyShape() {
   this.drawOnMap = function(_layer) {
     try {
       _layer.editing.enable(); //enable resize and drag behaviour on shape
+      this.shapesHistoryArr.push(_layer); //keep reference to _layer in order to delete it in the future
       this.drawnItems.addLayer(_layer);
       //if layer is circle - get its radius and center, otherwise its a polyline or polygon
       this.getShapeData(_layer);
