@@ -59,8 +59,8 @@ function DrawPolyShape() {
     this.drawnItems = _drawnItems;
     this.map = _map;
     this.map.on("draw:created", _e => this.drawOnMap(_e.layer));
-    this.map.on("draw:editmove", _e => this.getShapeData(_e.layer));
-    this.map.on("draw:editresize", _e => this.getShapeData(_e.layer));
+    // this.map.on("draw:editmove", _e => this.getShapeData(_e.layer));
+    // this.map.on("draw:editresize", _e => this.getShapeData(_e.layer));
   };
 
   this.polygon = function() {
@@ -93,7 +93,7 @@ function DrawPolyShape() {
   //event handler on this.map (draw:created event)
   this.drawOnMap = function(_layer) {
     try {
-      _layer.editing.enable(); //enable resize and drag behaviour on shape
+      editingFunctionality(_layer);
       this.shapesHistoryArr.push(_layer); //keep reference to _layer in order to delete it in the future
       this.drawnItems.addLayer(_layer);
       //if layer is circle - get its radius and center, otherwise its a polyline or polygon
@@ -127,6 +127,21 @@ function DrawPolyShape() {
       console.log("radius: " + radius, "center: " + center);
     } catch (_error) {
       console.log("DrawPolyShape.getCircleRadandCenter error", _error);
+    }
+  };
+
+  var editingFunctionality = (_layer) => {
+    try {
+      _layer.on("click", () => {
+        if (_layer.editing.enabled()) {
+          _layer.editing.disable();
+          this.getShapeData(_layer);
+        } else {
+          _layer.editing.enable();
+        }
+      });
+    } catch (_error) {
+      console.log("editingFunctionality error", _error);
     }
   };
 }
