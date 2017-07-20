@@ -3,7 +3,7 @@ window.onload = initMap;
 function initMap() {
   var center = [32.109333, 34.855499]; //israel
   var zoomLevel = 11;
-  var map = L.map("map").setView(center, zoomLevel);
+  var map = L.map("map", { editable: true }).setView(center, zoomLevel);
   var shapesHistoryArr = [];
   var draw = new DrawPolyShape();
 
@@ -17,8 +17,6 @@ function initMap() {
     draw: false //we set draw=false to hide default leaflet button toolbar
   });
 
-
-  
   //set event handlers
   (function setButtonsAndMapEventHandlers() {
     try {
@@ -60,6 +58,8 @@ function DrawPolyShape() {
     this.drawnItems = _drawnItems;
     this.map = _map;
     this.map.on("draw:created", _e => this.drawOnMap(_e.layer));
+    this.map.on("draw:editmove", _e => this.getShapeData(_e.layer));
+    this.map.on("draw:editresize", _e => this.getShapeData(_e.layer));
   };
 
   this.polygon = function() {
@@ -86,10 +86,6 @@ function DrawPolyShape() {
     try {
       var circle = new L.Draw.Circle(this.map, this.drawingManager);
       circle.enable();
-      circle.on('click', function() {
-        var editCircle = new L.Edit.Circle(this.map, this.drawingManager);
-        editCircle.enable();
-      })
       this.shapesHistoryArr.push(circle);
     } catch (_error) {
       console.log("DrawPolyShape.circle error", _error);
@@ -99,32 +95,26 @@ function DrawPolyShape() {
   //event handler on this.map (draw:created event)
   this.drawOnMap = function(_layer) {
     try {
+      _layer.editing.enable(); //enable resize and drag behaviour on shape
       this.drawnItems.addLayer(_layer);
       //if layer is circle - get its radius and center, otherwise its a polyline or polygon
-      _layer.options.radius ? this.getCircleRadandCenter(_layer) : this.getCoords(_layer);
+      this.getShapeData(_layer);
     } catch (_error) {
       console.log("DrawPolyShape.drawOnMap error", _error);
     }
   };
 
+  this.getShapeData = function(_layer) {
+    try {
+      _layer.options.radius ? this.getCircleRadandCenter(_layer) : this.getCoords(_layer);
+    } catch (error) {
+      console.log("DrawPolyShape.getShapeData error", _error);
+    }
+  };
+
   this.getCoords = function(_layer) {
     try {
-      function smartPush(_fullCoordArr, _newCoordArr) {
-        try {
-          for (var i = 0; i < _fullCoordArr.length; i++) {
-            if (_fullCoordArr[i][0] === _newCoordArr[0] && _fullCoordArr[i][1] === _newCoordArr[1]) {
-              return _fullCoordArr;
-            }
-          }
-          _fullCoordArr.push(_newCoordArr);
-          return _fullCoordArr;
-        } catch (_error) {
-          console.log("DrawPolyShape.getCoords smartPush error", _error);
-        }
-      }
-
       var coords = _layer.toGeoJSON().geometry.coordinates;
-      this.coordinatesArr = smartPush(this.coordinatesArr, coords);
       console.log(coords);
     } catch (_error) {
       console.log("DrawPolyShape.getCoords error", _error);
